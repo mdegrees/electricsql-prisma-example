@@ -1,0 +1,37 @@
+version: "3.1"
+
+volumes:
+  pg_data:
+
+services:
+  pg:
+    image: postgres:14-alpine
+    environment:
+      POSTGRES_DB: electric
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: pg_password
+    command:
+      - -c
+      - wal_level=logical
+      - -c
+      - listen_addresses=*
+    ports:
+      - 5432:5432
+    restart: always
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  electric:
+    image: electricsql/electric:canary
+    depends_on:
+      - pg
+    environment:
+      DATABASE_URL: postgresql://postgres:pg_password@pg/postgres
+      LOGICAL_PUBLISHER_HOST: electric
+      PG_PROXY_PASSWORD: proxy_password
+      AUTH_MODE: insecure
+      DATABASE_REQUIRE_SSL: false
+    ports:
+      - 5133:5133
+      - 65432:65432
+    restart: always
